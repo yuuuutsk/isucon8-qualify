@@ -11,11 +11,11 @@
   roles:
     - common
     - bench
-    - golang
+#    - golang
 #   - nodejs
 #   - perl
 #   - php
 #   - python
-#   - ruby
+    - ruby
     - mysql
     - nginx
