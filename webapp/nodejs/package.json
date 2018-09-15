@@ -1,25 +1,31 @@
 {
-  "name": "isubata",
+  "name": "torb.nodejs",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "ISUCON"
-  ],
-  "author": "Leko <leko.noor@gmail.com>",
+  "description": "torb.nodejs",
   "license": "MIT",
+  "engines": {
+    "node": "^10"
+  },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "cookie-session": "^1.3.2",
-    "ect": "^0.5.9",
-    "es6-promisify": "^5.0.0",
-    "express": "^4.16.1",
-    "express-session": "^1.15.6",
-    "multer": "^1.3.0",
-    "mysql": "^2.14.1"
+    "@types/node": "^10",
+    "cookie-signature": "^1.1.0",
+    "core-js": "^3.0.0-beta.3",
+    "ejs": "*",
+    "fastify": "^1.11.2",
+    "fastify-cookie": "*",
+    "fastify-mysql": "*",
+    "fastify-plugin": "*",
+    "fastify-static": "*",
+    "point-of-view": "*",
+    "trace-error": "*",
+    "ts-node": "*",
+    "typescript": "*"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^1.0.0-pre.30"
+  },
+  "scripts": {
+    "build": "tsc --build tsconfig.json && cp -f ./build/index.js index.js",
+    "clean": "rm -rf ./build index.js"
   }
 }

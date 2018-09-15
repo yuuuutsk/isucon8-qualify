@@ -1,6 +1,16 @@
-requires "Kossy";
-requires "DBIx::Sunny";
-requires "DBD::mysql";
-requires "Plack::Middleware::Session::Cookie";
-requires "DateTime::Format::MySQL";
-requires "Starlet";
+requires 'DBIx::Sunny';
+requires 'DBD::mysql', '<= 4.046';
+requires 'JSON::XS', '3.00';
+requires 'Kossy';
+requires 'Plack::Builder';
+requires 'Plack::Session';
+requires 'Starlet';
+requires 'Time::Moment';
+
+on configure => sub {
+    requires 'ExtUtils::MakeMaker';
+};
+
+on test => sub {
+    requires 'Test::More';
+};

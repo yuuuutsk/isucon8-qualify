@@ -1,8 +1,12 @@
-GOPATH := ${PWD}
-export GOPATH
+all: build
 
+.PHONY: clean
+clean:
+	rm -rf torb
+
+deps:
+	gb vendor restore
+
+.PHONY: build
 build:
-	go build -v isubata
-
-vet:
-	go vet ./src/isubata/...
+	GOPATH=`pwd`:`pwd`/vendor go build -v torb
