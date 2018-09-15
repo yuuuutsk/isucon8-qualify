@@ -56,17 +56,11 @@ module Torb
       def get_events(where = nil)
         where ||= ->(e) { e['public_fg'] }
 
-        db.query('BEGIN')
-        begin
-          event_ids = db.query('SELECT * FROM events ORDER BY id ASC').select(&where).map { |e| e['id'] }
-          events = event_ids.map do |event_id|
-            event = get_event(event_id)
-            event['sheets'].each { |sheet| sheet.delete('detail') }
-            event
-          end
-          db.query('COMMIT')
-        rescue
-          db.query('ROLLBACK')
+        event_ids = db.query('SELECT * FROM events ORDER BY id ASC').select(&where).map { |e| e['id'] }
+        events = event_ids.map do |event_id|
+          event = get_event(event_id)
+          event['sheets'].each { |sheet| sheet.delete('detail') }
+          event
         end
 
         events
