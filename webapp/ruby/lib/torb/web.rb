@@ -54,12 +54,10 @@ module Torb
       end
 
       def get_events(all = false)
-        event_ids = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', true)
+        rows = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', true)
 
-        pp event_ids
-
-        events = event_ids.map do |event_id|
-          event = get_event(event_id)
+        events = rows.map do |row|
+          event = get_event(row["id"])
           event['sheets'].each { |sheet| sheet.delete('detail') }
           event
         end
@@ -80,17 +78,17 @@ module Torb
         end
 
         reservations = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL', event['id'])
-        sheet_reservations = reservations.map { |reservation| [reservation.sheet_id, reservation] }.to_h
+        sheet_reservations = reservations.map { |reservation| [reservation["sheet_id"], reservation] }.to_h
 
         sheets.each do |sheet|
           event['sheets'][sheet['rank']]['price'] ||= event['price'] + sheet['price']
           event['total'] += 1
           event['sheets'][sheet['rank']]['total'] += 1
 
-          if sheet_reservations[sheet.id]
-            sheet['mine']        = true if login_user_id && sheet_reservations[sheet.id]['user_id'] == login_user_id
+          if sheet_reservations[sheet['id']]
+            sheet['mine']        = true if login_user_id && sheet_reservations[sheet['id']]['user_id'] == login_user_id
             sheet['reserved']    = true
-            sheet['reserved_at'] = sheet_reservations[sheet.id]['reserved_at'].to_i
+            sheet['reserved_at'] = sheet_reservations[sheet['id']]['reserved_at'].to_i
           else
             event['remains'] += 1
             event['sheets'][sheet['rank']]['remains'] += 1
@@ -111,10 +109,10 @@ module Torb
 
       def sheets
         return [
-          { 'rank': 'S', 'num': 50,  'price': 5000 },
-          { 'rank': 'A', 'num': 150, 'price': 3000 },
-          { 'rank': 'B', 'num': 300, 'price': 1000 },
-          { 'rank': 'C', 'num': 500, 'price': 0 },
+          { 'rank' => 'S', 'num' => 50,  'price' => 5000 },
+          { 'rank' => 'A', 'num' => 150, 'price' => 3000 },
+          { 'rank' => 'B', 'num' => 300, 'price' => 1000 },
+          { 'rank' => 'C', 'num' => 500, 'price' => 0 },
         ]
       end
 
