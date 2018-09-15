@@ -54,7 +54,7 @@ module Torb
       end
 
       def get_events(all = false)
-        event_ids = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', 1)
+        event_ids = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', true)
 
         events = event_ids.map do |event_id|
           event = get_event(event_id)
