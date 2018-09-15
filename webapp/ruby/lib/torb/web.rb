@@ -53,20 +53,13 @@ module Torb
         )
       end
 
-      def get_events(where = nil)
-        where ||= ->(e) { e['public_fg'] }
+      def get_events(all = false)
+        event_ids = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', 1)
 
-        db.query('BEGIN')
-        begin
-          event_ids = db.query('SELECT * FROM events ORDER BY id ASC').select(&where).map { |e| e['id'] }
-          events = event_ids.map do |event_id|
-            event = get_event(event_id)
-            event['sheets'].each { |sheet| sheet.delete('detail') }
-            event
-          end
-          db.query('COMMIT')
-        rescue
-          db.query('ROLLBACK')
+        events = event_ids.map do |event_id|
+          event = get_event(event_id)
+          event['sheets'].each { |sheet| sheet.delete('detail') }
+          event
         end
 
         events
@@ -350,7 +343,7 @@ module Torb
 
     get '/admin/' do
       @administrator = get_login_administrator
-      @events = get_events(->(_) { true }) if @administrator
+      @events = get_events(true) if @administrator
 
       erb :admin
     end
@@ -375,7 +368,7 @@ module Torb
     end
 
     get '/admin/api/events', admin_login_required: true do
-      events = get_events(->(_) { true })
+      events = get_events(true)
       events.to_json
     end
 
