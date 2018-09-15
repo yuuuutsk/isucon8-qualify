@@ -87,7 +87,6 @@ module Torb
         reservations = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL', event['id'])
         sheet_reservations = reservations.map { |reservation| [reservation.sheet_id, reservation] }.to_h
 
-        sheets = db.query('SELECT * FROM sheets ORDER BY `rank`, num')
         sheets.each do |sheet|
           event['sheets'][sheet['rank']]['price'] ||= event['price'] + sheet['price']
           event['total'] += 1
@@ -113,6 +112,15 @@ module Torb
         event['closed'] = event.delete('closed_fg')
 
         event
+      end
+
+      def sheets
+        return [
+          { 'rank': 'S', 'num': 50,  'price': 5000 },
+          { 'rank': 'A', 'num': 150, 'price': 3000 },
+          { 'rank': 'B', 'num': 300, 'price': 1000 },
+          { 'rank': 'C', 'num': 500, 'price': 0 },
+        ]
       end
 
       def sanitize_event(event)
