@@ -85,8 +85,12 @@ module Torb
           rank = sheet_id <= 50  ? 'S' :
                  sheet_id <= 200 ? 'A' :
                  sheet_id <= 500 ? 'B' : 'C'
+          diff = rank == 'S' ? 0 :
+                 rank == 'A' ? 50 :
+                 rank == 'B' ? 200 : 500
 
           sheet = sheets[rank]
+	  sheet['num'] = sheet_id - diff
 	  event['sheets'][rank]['total'] += 1
 
           event['sheets'][rank]['price'] ||= event['price'] + sheet['price']
