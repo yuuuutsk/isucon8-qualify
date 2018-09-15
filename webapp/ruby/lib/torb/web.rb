@@ -80,25 +80,28 @@ module Torb
         reservations = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL', event['id'])
         sheet_reservations = reservations.map { |reservation| [reservation["sheet_id"], reservation] }.to_h
 
-        sheets.each do |sheet|
-          event['sheets'][sheet['rank']]['price'] ||= event['price'] + sheet['price']
-          event['total'] += 1
-          event['sheets'][sheet['rank']]['total'] += 1
+	event['total'] = 1000
+        (1..1000).each do |sheet_id|
+          rank = sheet_id <= 50  ? 'S' :
+                 sheet_id <= 200 ? 'A' :
+                 sheet_id <= 500 ? 'B' : 'C'
 
-          if sheet_reservations[sheet['id']]
-            sheet['mine']        = true if login_user_id && sheet_reservations[sheet['id']]['user_id'] == login_user_id
+          sheet = sheets[rank]
+	  event['sheets'][rank]['total'] += 1
+
+          event['sheets'][rank]['price'] ||= event['price'] + sheet['price']
+
+          if sheet_reservations[sheet_id]
+            sheet['mine']        = true if login_user_id && sheet_reservations[sheet_id]['user_id'] == login_user_id
             sheet['reserved']    = true
-            sheet['reserved_at'] = sheet_reservations[sheet['id']]['reserved_at'].to_i
+            sheet['reserved_at'] = sheet_reservations[sheet_id]['reserved_at'].to_i
           else
             event['remains'] += 1
-            event['sheets'][sheet['rank']]['remains'] += 1
+            event['sheets'][rank]['remains'] += 1
           end
 
-          event['sheets'][sheet['rank']]['detail'].push(sheet)
-
-          sheet.delete('id')
-          sheet.delete('price')
-          sheet.delete('rank')
+	  sheet.delete('price')
+          event['sheets'][rank]['detail'].push(sheet)
         end
 
         event['public'] = event.delete('public_fg')
@@ -108,12 +111,12 @@ module Torb
       end
 
       def sheets
-        return [
-          { 'rank' => 'S', 'num' => 50,  'price' => 5000 },
-          { 'rank' => 'A', 'num' => 150, 'price' => 3000 },
-          { 'rank' => 'B', 'num' => 300, 'price' => 1000 },
-          { 'rank' => 'C', 'num' => 500, 'price' => 0 },
-        ]
+        return {
+          'S' => { 'num' => 50,  'price' => 5000 },
+          'A' => { 'num' => 150, 'price' => 3000 },
+          'B' => { 'num' => 300, 'price' => 1000 },
+          'C' => { 'num' => 500, 'price' => 0 },
+        }
       end
 
       def sanitize_event(event)
