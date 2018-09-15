@@ -134,7 +134,7 @@ module Torb
       end
 
       def validate_rank(rank)
-        db.xquery('SELECT COUNT(*) AS total_sheets FROM sheets WHERE `rank` = ?', rank).first['total_sheets'] > 0
+         %w[S A B C].include?(rank)
       end
 
       def body_params
@@ -286,11 +286,12 @@ module Torb
       sheet = nil
       reservation_id = nil
       loop do
-        sheet = db.xquery('SELECT * FROM sheets WHERE id NOT IN (SELECT sheet_id FROM reservations WHERE event_id = ? AND canceled_at IS NULL FOR UPDATE) AND `rank` = ? ORDER BY RAND() LIMIT 1', event['id'], rank).first
+        sheet = db.xquery('SELECT s.id as sheet_id FROM sheets as s LEFT JOIN fill_event_sheets as f on f.sheet_id = s.id where (f.event_id <> ? or f.event_id is null) and `rank` = ? ORDER BY RAND() LIMIT 1', event['id'], rank).first
         halt_with_error 409, 'sold_out' unless sheet
         db.query('BEGIN')
         begin
-          db.xquery('INSERT INTO reservations (event_id, sheet_id, user_id, reserved_at) VALUES (?, ?, ?, ?)', event['id'], sheet['id'], user['id'], Time.now.utc.strftime('%F %T.%6N'))
+          db.xquery('INSERT INTO fill_event_sheets (event_id, sheet_id) VALUES (?, ?)', event['id'], sheet['sheet_id'])
+          db.xquery('INSERT INTO reservations (event_id, sheet_id, user_id, reserved_at) VALUES (?, ?, ?, ?)', event['id'], sheet['sheet_id'], user['id'], Time.now.utc.strftime('%F %T.%6N'))
           reservation_id = db.last_id
           db.query('COMMIT')
         rescue => e
@@ -315,18 +316,17 @@ module Torb
       sheet = db.xquery('SELECT * FROM sheets WHERE `rank` = ? AND num = ?', rank, num).first
       halt_with_error 404, 'invalid_sheet' unless sheet
 
-      db.query('BEGIN')
       begin
-        reservation = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL GROUP BY event_id HAVING reserved_at = MIN(reserved_at) FOR UPDATE', event['id'], sheet['id']).first
+        reservation = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL LIMIT 1', event['id'], sheet['id']).first
         unless reservation
-          db.query('ROLLBACK')
           halt_with_error 400, 'not_reserved'
         end
         if reservation['user_id'] != user['id']
-          db.query('ROLLBACK')
           halt_with_error 403, 'not_permitted'
         end
 
+        db.query('BEGIN')
+        db.xquery('DELETE FROM fill_event_sheets where event_id = ? AND sheet_id = ?', event['id'], sheet['id'])
         db.xquery('UPDATE reservations SET canceled_at = ? WHERE id = ?', Time.now.utc.strftime('%F %T.%6N'), reservation['id'])
         db.query('COMMIT')
       rescue => e
