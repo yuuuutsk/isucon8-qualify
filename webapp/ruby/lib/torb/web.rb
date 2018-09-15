@@ -6,6 +6,8 @@ require 'mysql2-cs-bind'
 
 module Torb
   class Web < Sinatra::Base
+    use Rack::Lineprof, profile: 'web.rb'
+
     configure :development do
       require 'sinatra/reloader'
       register Sinatra::Reloader
