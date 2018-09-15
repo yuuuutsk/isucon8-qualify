@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     nickname    VARCHAR(128) NOT NULL,
     login_name  VARCHAR(128) NOT NULL,
     pass_hash   VARCHAR(128) NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE KEY login_name_uniq (login_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -12,6 +13,7 @@ CREATE TABLE IF NOT EXISTS events (
     public_fg   TINYINT(1)       NOT NULL,
     closed_fg   TINYINT(1)       NOT NULL,
     price       INTEGER UNSIGNED NOT NULL
+    PRIMARY KEY (id),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sheets (
@@ -19,6 +21,7 @@ CREATE TABLE IF NOT EXISTS sheets (
     `rank`      VARCHAR(128)     NOT NULL,
     num         INTEGER UNSIGNED NOT NULL,
     price       INTEGER UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE KEY rank_num_uniq (`rank`, num)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -29,6 +32,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     user_id     INTEGER UNSIGNED NOT NULL,
     reserved_at DATETIME(6)      NOT NULL,
     canceled_at DATETIME(6)      DEFAULT NULL,
+    PRIMARY KEY (id),
     KEY event_id_and_sheet_id_idx (event_id, sheet_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -37,5 +41,6 @@ CREATE TABLE IF NOT EXISTS administrators (
     nickname    VARCHAR(128) NOT NULL,
     login_name  VARCHAR(128) NOT NULL,
     pass_hash   VARCHAR(128) NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE KEY login_name_uniq (login_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
