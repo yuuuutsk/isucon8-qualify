@@ -286,7 +286,7 @@ module Torb
       sheet = nil
       reservation_id = nil
       loop do
-        sheet = db.xquery('SELECT s.id as sheet_id FROM sheets as s LEFT JOIN fill_event_sheets as f on f.sheet_id = s.id where (f.event_id <> ? or f.event_id is null) and `rank` = ? ORDER BY RAND() LIMIT 1', event['id'], rank).first
+        sheet = db.xquery('SELECT s.id as sheet_id, s.num as num FROM sheets as s LEFT JOIN fill_event_sheets as f on f.sheet_id = s.id where (f.event_id <> ? or f.event_id is null) and `rank` = ? ORDER BY RAND() LIMIT 1', event['id'], rank).first
         halt_with_error 409, 'sold_out' unless sheet
         db.query('BEGIN')
         begin
