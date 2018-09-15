@@ -172,6 +172,14 @@ module Torb
 
     get '/initialize' do
       system "../../db/init.sh"
+      rows = db.xquery('select * from reservations where canceled_at is null;')
+      insert_str = 'INSERT INTO fill_event_sheets values '
+      rows.each do |row|
+        insert_str += "(#{row['event_id']}, #{row['sheet_id']}),";
+      end
+      insert_str = insert_str[0 .. -2]
+      insert_str += ";"
+      db.xquery(insert_str)
 
       status 204
     end
