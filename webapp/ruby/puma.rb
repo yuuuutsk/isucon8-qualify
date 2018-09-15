@@ -5,6 +5,6 @@ pidfile "#{root}/tmp/puma/pid"
 state_path "#{root}/tmp/puma/state"
 rackup "#{root}/config.ru"
 
-threads 1, 1
+threads 4, 8
 
 activate_control_app
