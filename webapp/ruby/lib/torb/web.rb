@@ -84,17 +84,19 @@ module Torb
           event['sheets'][rank] = { 'total' => 0, 'remains' => 0, 'detail' => [] }
         end
 
+        reservations = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL', event['id'])
+        sheet_reservations = reservations.map { |reservation| [reservation.sheet_id, reservation] }.to_h
+
         sheets = db.query('SELECT * FROM sheets ORDER BY `rank`, num')
         sheets.each do |sheet|
           event['sheets'][sheet['rank']]['price'] ||= event['price'] + sheet['price']
           event['total'] += 1
           event['sheets'][sheet['rank']]['total'] += 1
 
-          reservation = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL GROUP BY event_id, sheet_id HAVING reserved_at = MIN(reserved_at)', event['id'], sheet['id']).first
-          if reservation
-            sheet['mine']        = true if login_user_id && reservation['user_id'] == login_user_id
+          if sheet_reservations[sheet.id]
+            sheet['mine']        = true if login_user_id && sheet_reservations[sheet.id]['user_id'] == login_user_id
             sheet['reserved']    = true
-            sheet['reserved_at'] = reservation['reserved_at'].to_i
+            sheet['reserved_at'] = sheet_reservations[sheet.id]['reserved_at'].to_i
           else
             event['remains'] += 1
             event['sheets'][sheet['rank']]['remains'] += 1
