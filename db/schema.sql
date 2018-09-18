@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS sheets (
 CREATE TABLE IF NOT EXISTS fill_event_sheets (
     event_id    INTEGER UNSIGNED NOT NULL,
     sheet_id    INTEGER UNSIGNED NOT NULL,
-    UNIQUE KEY event_id_sheet_id_uniq (event_id, sheet_id)
+    PRIMARY KEY event_id_sheet_id_uniq (event_id, sheet_id),
+    UNIQUE KEY sheet_id_uniq (sheet_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS reservations (
