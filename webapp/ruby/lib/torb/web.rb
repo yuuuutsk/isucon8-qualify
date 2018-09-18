@@ -53,20 +53,13 @@ module Torb
         )
       end
 
-      def get_events(where = nil)
-        where ||= ->(e) { e['public_fg'] }
+      def get_events(all = false)
+        rows = all ? db.xquery('SELECT id FROM events') : db.xquery('SELECT id FROM events WHERE public_fg = ?', true)
 
-        db.query('BEGIN')
-        begin
-          event_ids = db.query('SELECT * FROM events ORDER BY id ASC').select(&where).map { |e| e['id'] }
-          events = event_ids.map do |event_id|
-            event = get_event(event_id)
-            event['sheets'].each { |sheet| sheet.delete('detail') }
-            event
-          end
-          db.query('COMMIT')
-        rescue
-          db.query('ROLLBACK')
+        events = rows.map do |row|
+          event = get_event(row["id"])
+          event['sheets'].each { |sheet| sheet.delete('detail') }
+          event
         end
 
         events
@@ -84,33 +77,50 @@ module Torb
           event['sheets'][rank] = { 'total' => 0, 'remains' => 0, 'detail' => [] }
         end
 
-        sheets = db.query('SELECT * FROM sheets ORDER BY `rank`, num')
-        sheets.each do |sheet|
-          event['sheets'][sheet['rank']]['price'] ||= event['price'] + sheet['price']
-          event['total'] += 1
-          event['sheets'][sheet['rank']]['total'] += 1
+        reservations = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL', event['id'])
+        sheet_reservations = reservations.map { |reservation| [reservation["sheet_id"], reservation] }.to_h
 
-          reservation = db.xquery('SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL GROUP BY event_id, sheet_id HAVING reserved_at = MIN(reserved_at)', event['id'], sheet['id']).first
-          if reservation
-            sheet['mine']        = true if login_user_id && reservation['user_id'] == login_user_id
+	event['total'] = 1000
+        (1..1000).each do |sheet_id|
+          rank = sheet_id <= 50  ? 'S' :
+                 sheet_id <= 200 ? 'A' :
+                 sheet_id <= 500 ? 'B' : 'C'
+          diff = rank == 'S' ? 0 :
+                 rank == 'A' ? 50 :
+                 rank == 'B' ? 200 : 500
+
+          sheet = sheets[rank]
+	  sheet['num'] = sheet_id - diff
+	  event['sheets'][rank]['total'] += 1
+
+          event['sheets'][rank]['price'] ||= event['price'] + sheet['price']
+
+          if sheet_reservations[sheet_id]
+            sheet['mine']        = true if login_user_id && sheet_reservations[sheet_id]['user_id'] == login_user_id
             sheet['reserved']    = true
-            sheet['reserved_at'] = reservation['reserved_at'].to_i
+            sheet['reserved_at'] = sheet_reservations[sheet_id]['reserved_at'].to_i
           else
             event['remains'] += 1
-            event['sheets'][sheet['rank']]['remains'] += 1
+            event['sheets'][rank]['remains'] += 1
           end
 
-          event['sheets'][sheet['rank']]['detail'].push(sheet)
-
-          sheet.delete('id')
-          sheet.delete('price')
-          sheet.delete('rank')
+	  sheet.delete('price')
+          event['sheets'][rank]['detail'].push(sheet)
         end
 
         event['public'] = event.delete('public_fg')
         event['closed'] = event.delete('closed_fg')
 
         event
+      end
+
+      def sheets
+        return {
+          'S' => { 'num' => 50,  'price' => 5000 },
+          'A' => { 'num' => 150, 'price' => 3000 },
+          'B' => { 'num' => 300, 'price' => 1000 },
+          'C' => { 'num' => 500, 'price' => 0 },
+        }
       end
 
       def sanitize_event(event)
@@ -348,7 +358,7 @@ module Torb
 
     get '/admin/' do
       @administrator = get_login_administrator
-      @events = get_events(->(_) { true }) if @administrator
+      @events = get_events(true) if @administrator
 
       erb :admin
     end
@@ -373,7 +383,7 @@ module Torb
     end
 
     get '/admin/api/events', admin_login_required: true do
-      events = get_events(->(_) { true })
+      events = get_events(true)
       events.to_json
     end
 
